@@ -18,7 +18,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/patients")
-@Tag(name = "patient", description = "API for managing patients")
+@Tag(name = "patients", description = "API for managing patients")
 public class PatientController {
     public final PatientService patientService;
 
@@ -27,7 +27,7 @@ public class PatientController {
     }
 
     @GetMapping
-    @Operation(summary = "Get Patients")
+    @Operation(summary = "Get all Patients")
     public ResponseEntity<List<PatientResponseDTO>> getAllPatients() {
         List<PatientResponseDTO> patients = patientService.getPatients();
         return ResponseEntity.ok(patients);
