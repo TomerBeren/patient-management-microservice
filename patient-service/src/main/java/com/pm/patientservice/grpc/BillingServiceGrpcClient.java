@@ -38,10 +38,11 @@ public class BillingServiceGrpcClient {
             @Value("${billing.service.address:localhost}") String serverAddress,
             @Value("${billing.service.grpc.port:9001}") int serverPort) {
 
+        log.info("Initializing Grpc Client {} {}", serverAddress, serverPort);
         // Build a channel to the remote billing service
         this.channel = ManagedChannelBuilder
                 .forAddress(serverAddress, serverPort)
-                .usePlaintext()          // Disable TLS – use only if you run in a trusted network.
+                .usePlaintext()
                 .build();
 
         // Create a blocking (synchronous) stub from the generated BillingServiceGrpc class.
@@ -49,7 +50,8 @@ public class BillingServiceGrpcClient {
     }
 
     public BillingResponse createBillingAccount(String patientId, String name, String email) {
-        BillingRequest request = BillingRequest.newBuilder().setName(name).setEmail(email).build();
+        BillingRequest request = BillingRequest.newBuilder().setPatientId(patientId)
+                .setName(name).setEmail(email).build();
         BillingResponse response = blockingStub.createBillingAccount(request);
         log.info("Received response from billing service via GRPC: {}", response);
         return response;
