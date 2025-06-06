@@ -8,8 +8,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @GrpcService
-public class BillingGrpcService extends BillingServiceImplBase {
-    private static final Logger log = LoggerFactory.getLogger(BillingGrpcService.class);
+public class BillingServiceGrpc extends BillingServiceImplBase {
+    private static final Logger log = LoggerFactory.getLogger(BillingServiceGrpc.class);
 
     @Override
     public void createBillingAccount(billing.BillingRequest request,
