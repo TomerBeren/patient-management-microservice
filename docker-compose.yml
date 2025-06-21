@@ -1,6 +1,7 @@
 version: "3.8"
 
 services:
+  # ───────────────────────────────── Kafka ─────────────────────────────────
   kafka:
     image: bitnami/kafka:latest
     container_name: kafka
@@ -15,120 +16,91 @@ services:
     ports:
       - "9092:9092"
       - "9094:9094"
-    networks:
-      - internal
+    networks: [internal]
 
+  # ──────────────────────────────── Databases ─────────────────────────────
   patient-service-db:
     image: postgres:latest
     container_name: patient-service-db
     environment:
-      POSTGRES_USER: "admin_user"
-      POSTGRES_PASSWORD: "password"
-      POSTGRES_DB: "db"
-    ports:
-      - "5001:5432"
-    volumes:
-      - ./db_volumes/patient-service-db:/var/lib/postgresql/data
-    networks:
-      - internal
+      POSTGRES_USER:     ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB:       ${POSTGRES_DB}
+    ports: ["5001:5432"]
+    volumes: ["./db_volumes/patient-service-db:/var/lib/postgresql/data"]
+    networks: [internal]
 
   auth-service-db:
     image: postgres:latest
     container_name: auth-service-db
     environment:
-      POSTGRES_USER: "admin_user"
-      POSTGRES_PASSWORD: "password"
-      POSTGRES_DB: "db"
-    ports:
-      - "5002:5432"
-    volumes:
-      - ./db_volumes/auth-service-db:/var/lib/postgresql/data
-    networks:
-      - internal
+      POSTGRES_USER:     ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB:       ${POSTGRES_DB}
+    ports: ["5002:5432"]
+    volumes: ["./db_volumes/auth-service-db:/var/lib/postgresql/data"]
+    networks: [internal]
 
+  # ───────────────────────────── Business services ────────────────────────
   billing-service:
-    build:
-      context: ./billing-service
-      dockerfile: Dockerfile
+    build: { context: ./billing-service, dockerfile: Dockerfile }
     image: billing-service:latest
     container_name: billing-service
-    ports:
-      - "4001:4001"
-      - "9001:9001"
-    networks:
-      - internal
+    ports: ["4001:4001", "9001:9001"]
+    networks: [internal]
 
   analytics-service:
-    build:
-      context: ./analytics-service
-      dockerfile: Dockerfile
+    build: { context: ./analytics-service, dockerfile: Dockerfile }
     image: analytics-service:latest
     container_name: analytics-service
     environment:
-      SPRING_KAFKA_BOOTSTRAP_SERVERS: "kafka:9092"
-    ports:
-      - "4002:4002"
-    depends_on:
-      - kafka
-    networks:
-      - internal
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+    ports: ["4002:4002"]
+    depends_on: [kafka]
+    networks: [internal]
 
   patient-service:
-    build:
-      context: ./patient-service
-      dockerfile: Dockerfile
+    build: { context: ./patient-service, dockerfile: Dockerfile }
     image: patient-service:latest
     container_name: patient-service
     environment:
-      BILLING_SERVICE_ADDRESS: "billing-service"
-      BILLING_SERVICE_GRPC_PORT: "9001"
-      SPRING_DATASOURCE_PASSWORD: "password"
-      SPRING_DATASOURCE_URL: "jdbc:postgresql://patient-service-db:5432/db"
-      SPRING_DATASOURCE_USERNAME: "admin_user"
-      SPRING_JPA_HIBERNATE_DDL_AUTO: "update"
-      SPRING_SQL_INIT_MODE: "always"
-      SPRING_KAFKA_BOOTSTRAP_SERVERS: "kafka:9092"
-    ports:
-      - "4000:4000"
-    depends_on:
-      - patient-service-db
-      - billing-service
-      - kafka
-    networks:
-      - internal
+      BILLING_SERVICE_ADDRESS: billing-service
+      BILLING_SERVICE_GRPC_PORT: 9001
+
+      SPRING_DATASOURCE_URL: "jdbc:postgresql://patient-service-db:5432/${POSTGRES_DB}"
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_SQL_INIT_MODE: always
+
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+    ports: ["4000:4000"]
+    depends_on: [patient-service-db, billing-service, kafka]
+    networks: [internal]
 
   auth-service:
-    build:
-      context: ./auth-service
-      dockerfile: Dockerfile
+    build: { context: ./auth-service, dockerfile: Dockerfile }
     image: auth-service:latest
     container_name: auth-service
     environment:
-      SPRING_DATASOURCE_PASSWORD: "password"
-      SPRING_DATASOURCE_URL: "jdbc:postgresql://auth-service-db:5432/db"
-      SPRING_DATASOURCE_USERNAME: "admin_user"
-      SPRING_JPA_HIBERNATE_DDL_AUTO: "update"
-      SPRING_SQL_INIT_MODE: "always"
-      JWT_SECRET: "A/bvXF97rJa7/fetzqFH5fFT6lZMcAa+hfVVJYIg4Zg="
-    ports:
-      - "4005:4005"
-    depends_on:
-      - auth-service-db
-    networks:
-      - internal
+      SPRING_DATASOURCE_URL: "jdbc:postgresql://auth-service-db:5432/${POSTGRES_DB}"
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_SQL_INIT_MODE: always
+
+      JWT_SECRET: ${JWT_SECRET}
+    ports: ["4005:4005"]
+    depends_on: [auth-service-db]
+    networks: [internal]
 
   api-gateway:
-    build:
-      context: ./api-gateway
-      dockerfile: Dockerfile
+    build: { context: ./api-gateway, dockerfile: Dockerfile }
     image: api-gateway:latest
     container_name: api-gateway
-    ports:
-      - "4004:4004"
-    depends_on:
-      - patient-service
-    networks:
-      - internal
+    ports: ["4004:4004"]
+    depends_on: [patient-service]
+    networks: [internal]
 
 networks:
   internal:
