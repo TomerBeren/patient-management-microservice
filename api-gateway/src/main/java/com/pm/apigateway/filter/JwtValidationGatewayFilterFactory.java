@@ -5,9 +5,11 @@ import org.springframework.cloud.gateway.filter.GatewayFilter;
 import org.springframework.cloud.gateway.filter.factory.AbstractGatewayFilterFactory;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Mono;
 
 @Component
 public class JwtValidationGatewayFilterFactory extends AbstractGatewayFilterFactory<Object> {
@@ -32,8 +34,15 @@ public class JwtValidationGatewayFilterFactory extends AbstractGatewayFilterFact
                     .uri("/validate")
                     .header(HttpHeaders.AUTHORIZATION, token)
                     .retrieve()
+                    .onStatus(HttpStatusCode::isError,
+                            resp -> Mono.error(new IllegalStateException("Bad token")))
                     .toBodilessEntity()
-                    .then(chain.filter(exchange));
+                    .flatMap(__ -> chain.filter(exchange))
+                    .onErrorResume(ex -> {
+                        exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
+                        return exchange.getResponse().setComplete();
+                    });
+
 
         };
     }
