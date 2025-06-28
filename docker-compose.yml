@@ -95,6 +95,8 @@ services:
     build: { context: ./api-gateway, dockerfile: Dockerfile }
     image: api-gateway:latest
     container_name: api-gateway
+    environment:
+      AUTH_SERVICE_URL: "http://auth-service:4005"
     ports: ["4004:4004"]
     depends_on: [patient-service]
     networks: [internal]
