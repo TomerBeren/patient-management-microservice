@@ -20,6 +20,7 @@ spring:
             - Path=/api/patients/**    # Match any request starting with /api/patients/
           filters:
             - StripPrefix=1            # Remove the first segment (“api”) so the service sees “/patients/…”
+            - JwtValidation
 
         - id: api-docs-patient-route     # Route for patient-service OpenAPI docs
           uri: http://patient-service:4000 # Downstream patient-service base URL
