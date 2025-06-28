@@ -55,7 +55,6 @@ services:
     container_name: analytics-service
     environment:
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
-    ports: ["4002:4002"]
     depends_on: [kafka]
     networks: [internal]
 
@@ -74,7 +73,6 @@ services:
       SPRING_SQL_INIT_MODE: always
 
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
-    ports: ["4000:4000"]
     depends_on: [patient-service-db, billing-service, kafka]
     networks: [internal]
 
@@ -90,7 +88,6 @@ services:
       SPRING_SQL_INIT_MODE: always
 
       JWT_SECRET: ${JWT_SECRET}
-    ports: ["4005:4005"]
     depends_on: [auth-service-db]
     networks: [internal]
 
