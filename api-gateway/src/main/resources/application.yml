@@ -1,20 +1,30 @@
+# Gateway server configuration
 server:
-  port: 4004
+  port: 4004  # Port on which the Spring Cloud Gateway will listen
 
 spring:
   cloud:
     gateway:
       routes:
-        - id: patient-service-root
-          uri: http://patient-service:4000
-          predicates:
-            - Path=/api/patients/**
-          filters:
-            - StripPrefix=1
 
-        - id: api-docs-patient-route
-          uri: http://patient-service:4000
+        - id: auth-service-route         # Route for authentication endpoints
+          uri: http://auth-service:4005 # Downstream auth-service base URL
           predicates:
-              - Path=/api-docs/patients
+            - Path=/auth/**             # Match any request under /auth/
           filters:
-              - RewritePath=/api-docs/patients,/v3/api-docs
+            - StripPrefix=1             # Strip off “auth” before forwarding
+
+        - id: patient-service-root       # Route for patient-service API
+          uri: http://patient-service:4000 # Downstream patient-service base URL
+          predicates:
+            - Path=/api/patients/**    # Match any request starting with /api/patients/
+          filters:
+            - StripPrefix=1            # Remove the first segment (“api”) so the service sees “/patients/…”
+
+        - id: api-docs-patient-route     # Route for patient-service OpenAPI docs
+          uri: http://patient-service:4000 # Downstream patient-service base URL
+          predicates:
+            - Path=/api-docs/patients   # Match exactly /api-docs/patients
+          filters:
+            - RewritePath=/api-docs/patients,/v3/api-docs
+            # Rewrite the incoming path to “/v3/api-docs”
