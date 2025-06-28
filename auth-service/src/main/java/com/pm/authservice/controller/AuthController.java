@@ -4,6 +4,8 @@ import com.pm.authservice.dto.LoginRequestDTO;
 import com.pm.authservice.dto.LoginResponseDTO;
 import com.pm.authservice.service.AuthService;
 import io.swagger.v3.oas.annotations.Operation;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -22,6 +24,7 @@ import java.util.Optional;
 @RestController
 public class AuthController {
 
+    private static final Logger log = LoggerFactory.getLogger(AuthController.class);
     /** Service layer that contains the authentication/token logic. */
     private final AuthService authService;
 
@@ -70,7 +73,7 @@ public class AuthController {
     @Operation(summary = "Validate Token")
     @GetMapping("/validate")
     public ResponseEntity<Void> validateToken(@RequestHeader("Authorization") String authHeader) {
-
+        log.info("Validating Token");
         // Header must be present and start with "Bearer "
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
